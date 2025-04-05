@@ -7,13 +7,20 @@ const publicPaths = ["/", "/auth/login", "/auth/register"]
 export async function middleware(request: NextRequest) {
 	const { pathname } = request.nextUrl
 
-	// Allow public paths
+	// Check for auth token
+	const auth = request.cookies.get("auth")
+
+	// If user is authenticated and tries to access non-dashboard pages, redirect to dashboard
+	if (auth && !pathname.startsWith("/dashboard")) {
+		return NextResponse.redirect(new URL("/dashboard", request.url))
+	}
+
+	// Allow public paths for unauthenticated users
 	if (publicPaths.includes(pathname)) {
 		return NextResponse.next()
 	}
 
-	// Check for auth token
-	const auth = request.cookies.get("auth")
+	// If no auth token, redirect to login
 	if (!auth) {
 		return NextResponse.redirect(new URL("/auth/login", request.url))
 	}

@@ -2,19 +2,22 @@
 
 import type React from "react"
 
-import { useState } from "react"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-sonner"
+import { useState } from "react"
+import { useAuth } from "@/contexts/auth-context"
+import { getInitials } from "@/lib/utils"
 
 export default function ProfilePage() {
 	const { toast } = useToast()
 	const [isLoading, setIsLoading] = useState(false)
+	const { user } = useAuth()
 
 	const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
@@ -79,7 +82,9 @@ export default function ProfilePage() {
 											src='/placeholder.svg?height=80&width=80'
 											alt='Profile'
 										/>
-										<AvatarFallback>JD</AvatarFallback>
+										<AvatarFallback>
+											{user ? getInitials(user.username) : "??"}
+										</AvatarFallback>
 									</Avatar>
 									<Button variant='outline' type='button'>
 										Change Avatar
@@ -89,18 +94,18 @@ export default function ProfilePage() {
 								<div className='grid gap-4'>
 									<div className='grid gap-2'>
 										<Label htmlFor='name'>Name</Label>
-										<Input id='name' defaultValue='John Doe' />
+										<Input id='name' defaultValue={user?.username || ""} />
 									</div>
 
 									<div className='grid gap-2'>
 										<Label htmlFor='email'>Email</Label>
-										<Input id='email' type='email' defaultValue='john.doe@example.com' />
+										<Input id='email' type='email' defaultValue={user?.email || ""} />
 									</div>
 
-									<div className='grid gap-2'>
+									{/* <div className='grid gap-2'>
 										<Label htmlFor='phone'>Phone Number</Label>
-										<Input id='phone' type='tel' defaultValue='(555) 123-4567' />
-									</div>
+										<Input id='phone' type='tel' defaultValue={user?.phone || ""} />
+									</div> */}
 								</div>
 
 								<Button type='submit' disabled={isLoading}>

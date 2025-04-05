@@ -11,10 +11,13 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
+import { getInitials } from "@/lib/utils"
+import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 
 export function UserNav() {
 	const router = useRouter()
+	const { user } = useAuth()
 
 	const handleLogout = async () => {
 		await fetch("/api/auth/logout", { method: "POST" })
@@ -27,15 +30,15 @@ export function UserNav() {
 				<Button variant='ghost' className='relative h-8 w-8 rounded-full'>
 					<Avatar className='h-8 w-8'>
 						<AvatarImage src='/placeholder.svg?height=32&width=32' alt='User' />
-						<AvatarFallback>JD</AvatarFallback>
+						<AvatarFallback>{getInitials(user?.username || "")}</AvatarFallback>
 					</Avatar>
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent className='w-56' align='end' forceMount>
 				<DropdownMenuLabel className='font-normal'>
 					<div className='flex flex-col space-y-1'>
-						<p className='text-sm font-medium leading-none'>John Doe</p>
-						<p className='text-xs leading-none text-muted-foreground'>john.doe@example.com</p>
+						<p className='text-sm font-medium leading-none'>{user?.username || "User"}</p>
+						<p className='text-xs leading-none text-muted-foreground'>{user?.email || ""}</p>
 					</div>
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />

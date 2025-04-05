@@ -1,7 +1,7 @@
-import type { ReactNode } from "react"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
-import { UserNav } from "@/components/dashboard/user-nav"
 import { MobileNav } from "@/components/dashboard/mobile-nav"
+import { UserNav } from "@/components/dashboard/user-nav"
+import type { ReactNode } from "react"
 
 interface DashboardLayoutProps {
 	children: ReactNode

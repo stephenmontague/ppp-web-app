@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server"
+import { AuthResponseDTO, RegisterRequestDTO } from "@/types/auth"
+import { ErrorResponseDTO } from "@/types/error"
 
 export async function POST(request: Request) {
 	try {
-		const body = await request.json()
+		const body = (await request.json()) as RegisterRequestDTO
 		const { name, email, password } = body
 
 		const response = await fetch("http://localhost:8080/auth/register", {
@@ -13,13 +15,22 @@ export async function POST(request: Request) {
 			body: JSON.stringify({ name, email, password })
 		})
 
+		const data = await response.json()
+
 		if (!response.ok) {
-			return NextResponse.json({ error: "Registration failed" }, { status: response.status })
+			const errorData = data as ErrorResponseDTO
+			return NextResponse.json(errorData, { status: response.status })
 		}
 
-		const data = await response.json()
-		return NextResponse.json(data)
+		return NextResponse.json(data as AuthResponseDTO)
 	} catch (error) {
-		return NextResponse.json({ error: "Registration failed" }, { status: 400 })
+		return NextResponse.json(
+			{
+				status: 400,
+				error: "Registration failed",
+				message: "An unexpected error occurred during registration"
+			} as ErrorResponseDTO,
+			{ status: 400 }
+		)
 	}
 }

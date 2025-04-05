@@ -1,18 +1,13 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react"
-
-interface User {
-	id: number
-	username: string
-	email: string
-}
+import { UserDTO } from "@/types/user"
+import { createContext, ReactNode, useContext, useEffect, useState } from "react"
 
 interface AuthContextType {
-	user: User | null
+	user: UserDTO | null
 	accessToken: string | null
 	refreshToken: string | null
-	setAuth: (user: User, accessToken: string, refreshToken: string) => void
+	setAuth: (user: UserDTO, accessToken: string, refreshToken: string) => Promise<void>
 	isAuthenticated: boolean
 	logout: () => void
 	refreshAccessToken: () => Promise<void>
@@ -21,7 +16,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-	const [user, setUser] = useState<User | null>(null)
+	const [user, setUser] = useState<UserDTO | null>(null)
 	const [accessToken, setAccessToken] = useState<string | null>(null)
 	const [refreshToken, setRefreshToken] = useState<string | null>(null)
 
@@ -44,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		checkAuth()
 	}, [])
 
-	const setAuth = async (user: User, accessToken: string, refreshToken: string) => {
+	const setAuth = async (user: UserDTO, accessToken: string, refreshToken: string) => {
 		setUser(user)
 		setAccessToken(accessToken)
 		setRefreshToken(refreshToken)

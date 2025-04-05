@@ -1,0 +1,18 @@
+/* Add these utility classes */
+.compact-mode {
+	--spacing-base: 0.75rem; /* 12px instead of default 16px */
+	--font-size-base: 0.875rem; /* 14px instead of default 16px */
+}
+
+/* Apply compact mode styles */
+.compact-mode .card {
+	padding: var(--spacing-base);
+}
+
+.compact-mode .space-y-4 {
+	gap: var(--spacing-base);
+}
+
+.compact-mode .text-sm {
+	font-size: var(--font-size-base);
+}

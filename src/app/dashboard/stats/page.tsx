@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
+import { StatsOverview } from "@/components/dashboard/stats-overview"
+import { RoundHistoryTable } from "@/components/stats/round-history-table"
+import { ScoreHistoryChart } from "@/components/stats/score-history-chart"
+import { StatsBreakdown } from "@/components/stats/stats-breakdown"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
 	Dialog,
 	DialogContent,
@@ -16,11 +18,9 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { StatsOverview } from "@/components/dashboard/stats-overview"
-import { ScoreHistoryChart } from "@/components/stats/score-history-chart"
-import { StatsBreakdown } from "@/components/stats/stats-breakdown"
-import { RoundHistoryTable } from "@/components/stats/round-history-table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus } from "lucide-react"
+import { useState } from "react"
 
 export default function StatsPage() {
 	const [isDialogOpen, setIsDialogOpen] = useState(false)

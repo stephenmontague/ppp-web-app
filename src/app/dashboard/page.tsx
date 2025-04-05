@@ -1,12 +1,12 @@
 "use client"
 
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
+import { PracticeSessionCard } from "@/components/dashboard/practice-session-card"
+import { StatsOverview } from "@/components/dashboard/stats-overview"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CalendarDays, Clock, BarChart3, Target } from "lucide-react"
-import { PracticeSessionCard } from "@/components/dashboard/practice-session-card"
-import { StatsOverview } from "@/components/dashboard/stats-overview"
+import { BarChart3, CalendarDays, Clock, Target } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export default function DashboardPage() {

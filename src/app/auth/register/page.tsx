@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-sonner"
+import { RegisterRequestDTO } from "@/types/auth"
 
 const formSchema = z
 	.object({
@@ -29,12 +30,14 @@ const formSchema = z
 		path: ["confirmPassword"]
 	})
 
+type FormValues = z.infer<typeof formSchema>
+
 export default function RegisterPage() {
 	const [isLoading, setIsLoading] = useState(false)
 	const router = useRouter()
 	const { toast } = useToast()
 
-	const form = useForm<z.infer<typeof formSchema>>({
+	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			name: "",
@@ -44,21 +47,25 @@ export default function RegisterPage() {
 		}
 	})
 
-	async function onSubmit(values: z.infer<typeof formSchema>) {
+	async function onSubmit(values: FormValues) {
 		setIsLoading(true)
 		try {
+			const requestBody: RegisterRequestDTO = {
+				name: values.name,
+				email: values.email,
+				password: values.password
+			}
+
 			const response = await fetch("/api/auth/register", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					name: values.name,
-					email: values.email,
-					password: values.password
-				})
+				body: JSON.stringify(requestBody)
 			})
 
+			const data = await response.json()
+
 			if (!response.ok) {
-				throw new Error("Registration failed")
+				throw new Error(data.message || "Registration failed")
 			}
 
 			toast({
@@ -71,7 +78,10 @@ export default function RegisterPage() {
 			toast({
 				variant: "destructive",
 				title: "Registration failed",
-				description: "There was a problem with your registration. Please try again."
+				description:
+					error instanceof Error
+						? error.message
+						: "There was a problem with your registration. Please try again."
 			})
 		} finally {
 			setIsLoading(false)

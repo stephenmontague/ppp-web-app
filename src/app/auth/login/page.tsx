@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-sonner"
 import { useAuth } from "@/contexts/auth-context"
+import { AuthRequestDTO } from "@/types/auth"
 
 const formSchema = z.object({
 	email: z.string().email({
@@ -21,13 +22,15 @@ const formSchema = z.object({
 	})
 })
 
+type FormValues = z.infer<typeof formSchema>
+
 export default function LoginPage() {
 	const [isLoading, setIsLoading] = useState(false)
 	const router = useRouter()
 	const { toast } = useToast()
 	const { setAuth, accessToken } = useAuth()
 
-	const form = useForm<z.infer<typeof formSchema>>({
+	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			email: "",
@@ -35,41 +38,45 @@ export default function LoginPage() {
 		}
 	})
 
-	async function onSubmit(values: z.infer<typeof formSchema>) {
+	async function onSubmit(values: FormValues) {
 		setIsLoading(true)
 		try {
+			const requestBody: AuthRequestDTO = {
+				email: values.email,
+				password: values.password
+			}
+
 			const response = await fetch("/api/auth/login", {
 				method: "POST",
 				headers: {
 					Authorization: `Bearer ${accessToken}`,
 					"Content-Type": "application/json"
 				},
-				body: JSON.stringify({
-					email: values.email,
-					password: values.password
-				})
+				body: JSON.stringify(requestBody)
 			})
-
-			if (!response.ok) {
-				throw new Error("Login failed")
-			}
 
 			const data = await response.json()
 
-			// Store auth data in cookie
-			setAuth(data.user, data.accessToken, data.refreshToken)
+			if (!response.ok) {
+				throw new Error(data.message || "Login failed")
+			}
 
+			// Store auth data in cookie
+			await setAuth(data.user, data.accessToken, data.refreshToken)
+
+			// Ensure cookie is set before redirecting
 			toast({
 				title: "Login successful!",
-				description: "Welcome back to Pocket Practice Plan."
+				description: "Setting up your session..."
 			})
+			await new Promise((resolve) => setTimeout(resolve, 100))
 
 			router.push("/dashboard")
 		} catch (error) {
 			toast({
 				variant: "destructive",
 				title: "Login failed",
-				description: "Invalid email or password. Please try again."
+				description: error instanceof Error ? error.message : "Invalid email or password. Please try again."
 			})
 		} finally {
 			setIsLoading(false)
@@ -122,7 +129,7 @@ export default function LoginPage() {
 								)}
 							/>
 							<Button type='submit' className='w-full' disabled={isLoading}>
-								{isLoading ? "Signing in..." : "Sign in"}
+								{isLoading ? "Setting up session..." : "Sign in"}
 							</Button>
 						</form>
 					</Form>
