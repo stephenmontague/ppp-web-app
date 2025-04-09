@@ -20,8 +20,23 @@ export function UserNav() {
 	const { user } = useAuth()
 
 	const handleLogout = async () => {
-		await fetch("/api/auth/logout", { method: "POST" })
-		router.push("/")
+		try {
+			const response = await fetch("/auth/logout", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				}
+			})
+
+			if (!response.ok) {
+				throw new Error("Logout failed")
+			}
+
+			router.push("/")
+		} catch (error) {
+			console.error("Logout error:", error)
+			// You might want to show a toast notification here
+		}
 	}
 
 	return (

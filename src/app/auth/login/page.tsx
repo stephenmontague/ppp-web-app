@@ -11,7 +11,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-sonner"
 import { useAuth } from "@/contexts/auth-context"
-import { AuthRequestDTO } from "@/types/auth"
 
 const formSchema = z.object({
 	email: z.string().email({
@@ -28,7 +27,7 @@ export default function LoginPage() {
 	const [isLoading, setIsLoading] = useState(false)
 	const router = useRouter()
 	const { toast } = useToast()
-	const { setAuth, accessToken } = useAuth()
+	const { login } = useAuth() // Use the login method from useAuth
 
 	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema),
@@ -41,30 +40,9 @@ export default function LoginPage() {
 	async function onSubmit(values: FormValues) {
 		setIsLoading(true)
 		try {
-			const requestBody: AuthRequestDTO = {
-				email: values.email,
-				password: values.password
-			}
+			// Use the login method from AuthContext
+			await login(values.email, values.password)
 
-			const response = await fetch("/api/auth/login", {
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${accessToken}`,
-					"Content-Type": "application/json"
-				},
-				body: JSON.stringify(requestBody)
-			})
-
-			const data = await response.json()
-
-			if (!response.ok) {
-				throw new Error(data.message || "Login failed")
-			}
-
-			// Store auth data in cookie
-			await setAuth(data.user, data.accessToken, data.refreshToken)
-
-			// Ensure cookie is set before redirecting
 			toast({
 				title: "Login successful!",
 				description: "Setting up your session..."

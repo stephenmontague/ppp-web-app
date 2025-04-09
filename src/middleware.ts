@@ -1,65 +1,83 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-// Add paths that don't require authentication
 const publicPaths = ["/", "/auth/login", "/auth/register"]
+const protectedPaths = ["/dashboard", "/dashboard/practice"] // Add other protected paths as needed
+
+function isTokenExpired(token: string): boolean {
+	try {
+		const payload = JSON.parse(atob(token.split(".")[1]))
+		const expiry = payload.exp * 1000 // Convert to milliseconds
+		return Date.now() >= expiry
+	} catch (error) {
+		return true // If token parsing fails, treat it as expired
+	}
+}
 
 export async function middleware(request: NextRequest) {
 	const { pathname } = request.nextUrl
+	const accessToken = request.cookies.get("access_token")?.value
+	const refreshToken = request.cookies.get("refresh_token")?.value
 
-	// Check for auth token
-	const auth = request.cookies.get("auth")
+	const isAuthenticated = accessToken && !isTokenExpired(accessToken)
+	console.log("[Middleware] Is authenticated:", isAuthenticated)
 
-	// If user is authenticated and tries to access non-dashboard pages, redirect to dashboard
-	if (auth && !pathname.startsWith("/dashboard")) {
+	if (isAuthenticated && publicPaths.includes(pathname)) {
+		console.log("[Middleware] Redirecting authenticated user to /dashboard")
 		return NextResponse.redirect(new URL("/dashboard", request.url))
 	}
 
-	// Allow public paths for unauthenticated users
-	if (publicPaths.includes(pathname)) {
+	// If the path is not public or protected, allow the request to proceed
+	if (!publicPaths.includes(pathname) && !protectedPaths.some((path) => pathname.startsWith(path))) {
 		return NextResponse.next()
 	}
 
-	// If no auth token, redirect to login
-	if (!auth) {
+	// If no refresh token, redirect to login (for protected paths)
+	if (!refreshToken && protectedPaths.some((path) => pathname.startsWith(path))) {
 		return NextResponse.redirect(new URL("/auth/login", request.url))
 	}
 
-	try {
-		const { accessToken, refreshToken } = JSON.parse(auth.value)
+	// If access token is missing or expired, attempt to refresh
+	if (!accessToken || isTokenExpired(accessToken)) {
+		const cookieHeader = request.headers.get("Cookie") || ""
+		const refreshResponse = await fetch(new URL("/api/auth/refresh", request.url), {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Cookie: cookieHeader
+			}
+		})
 
-		// If no access token, try to refresh
-		if (!accessToken && refreshToken) {
-			const refreshResponse = await fetch(new URL("/api/auth/refresh", request.url), {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ refreshToken })
-			})
-
-			if (!refreshResponse.ok) {
-				// If refresh fails, redirect to login
+		if (!refreshResponse.ok) {
+			// If refresh fails, redirect to login for protected paths
+			if (protectedPaths.some((path) => pathname.startsWith(path))) {
 				return NextResponse.redirect(new URL("/auth/login", request.url))
 			}
-
-			const { accessToken: newAccessToken } = await refreshResponse.json()
-
-			// Update the auth cookie with the new access token
-			const response = NextResponse.next()
-			response.cookies.set(
-				"auth",
-				JSON.stringify({
-					...JSON.parse(auth.value),
-					accessToken: newAccessToken
-				})
-			)
-			return response
+			return NextResponse.next()
 		}
 
-		return NextResponse.next()
-	} catch (error) {
-		// If there's any error with the auth cookie, redirect to login
-		return NextResponse.redirect(new URL("/auth/login", request.url))
+		const data = await refreshResponse.json()
+		const response = NextResponse.next()
+
+		// Update access token cookie
+		response.cookies.set("access_token", data.accessToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "lax",
+			path: "/",
+			maxAge: data.expiresIn
+		})
+
+		// If the user was trying to access a public path, redirect to /dashboard after refreshing
+		if (publicPaths.includes(pathname)) {
+			return NextResponse.redirect(new URL("/dashboard", request.url))
+		}
+
+		return response
 	}
+
+	// If access token is valid, proceed with the request
+	return NextResponse.next()
 }
 
 export const config = {

@@ -1,27 +1,44 @@
-import { UserDTO } from "@/types/user"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { cookies } from "next/headers"
 
-// PUT /api/user
-export async function PUT(request: Request) {
+export async function GET(request: NextRequest) {
 	try {
-		const data: UserDTO = await request.json()
-		const userId = new URL(request.url).searchParams.get("id")
+		const cookieStore = await cookies()
+		const accessToken = cookieStore.get("access_token")?.value
 
-		const response = await fetch(`http://localhost:8080/user/${userId}`, {
-			method: "PUT",
-			headers: {
-				"Content-Type": "application/json"
-			},
-			body: JSON.stringify(data)
-		})
-
-		if (!response.ok) {
-			throw new Error("Failed to update user profile")
+		if (!accessToken) {
+			return NextResponse.json(
+				{
+					status: 401,
+					error: "Unauthorized",
+					message: "Access token is missing"
+				},
+				{ status: 401 }
+			)
 		}
 
-		const updatedUser = await response.json()
-		return NextResponse.json(updatedUser)
+		const response = await fetch(`${process.env.PUBLIC_NEXT_API_URL}/api/users/me`, {
+			method: "GET",
+			headers: {
+				Authorization: `Bearer ${accessToken}`
+			}
+		})
+
+		const data = await response.json()
+
+		if (!response.ok) {
+			return NextResponse.json(data, { status: response.status })
+		}
+
+		return NextResponse.json(data)
 	} catch (error) {
-		return NextResponse.json({ error: "Failed to update user profile" }, { status: 500 })
+		return NextResponse.json(
+			{
+				status: 500,
+				error: "Internal server error",
+				message: "An unexpected error occurred while fetching user data"
+			},
+			{ status: 500 }
+		)
 	}
 }
